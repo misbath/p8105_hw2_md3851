@@ -11,6 +11,8 @@ library(tidyverse)
 library(readxl)
 ```
 
+Problem 1
+
 This chunk loads and cleans the data in the first sheet of the Excel file.
 ```{r Mr.Trash Wheel, message=FALSE} 
 wheel_data =
@@ -26,10 +28,11 @@ as.integer(pull(wheel_data, sports_balls))
 precip2018_data =
 read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 3, skip = 1) %>%
 janitor::clean_names() %>%
-drop_na(total, month) %>%
+drop_na(total) %>%
 mutate(
-  year = c("2018", "2018", "2018", "2018", "2018", "2018", "2018")
-)
+  year = c("2018", "2018", "2018", "2018", "2018", "2018", "2018", "2018")
+) %>%
+select(month, year, total)
 precip2018_data
 ```
 
@@ -37,15 +40,63 @@ precip2018_data
 precip2017_data =
 read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 4, skip = 1) %>%
 janitor::clean_names() %>% 
-drop_na(total, month) %>%
+drop_na(total) %>%
 mutate(
-  year = c("2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017")
-)
+  year = c("2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017")
+) %>%
+select(month, year, total)
 precip2017_data
 ```
 
 ```{r joined precipitation, message=FALSE}
 overall_precip_data = 
-  left_join(precip2018_data, precip2017_data, by = "month")
+  left_join(precip2018_data, precip2017_data, by = "month") 
+
+#  mutate(month = month.name)
+  
+overall_precip_data
+```
+
+Problem 2
+```{r}
+pols_data = read_csv("./data/pols-month.csv") %>%
+  janitor::clean_names() %>%
+  separate(mon, into = c("year", "month", "day"), sep="-") %>%
+  mutate(
+   president = prez_gop + prez_dem
+   ) %>%
+  select(-day, -prez_gop, -prez_dem) 
+
+#months(pull(month))
+#month.name(month)
+  
+
+pols_data
+```
+
+```{r}
+snp_data = read_csv("./data/snp.csv") %>%
+  janitor::clean_names() %>%
+  separate(date, into = c("day", "month", "year"), sep="/") %>%
+  select(year, month, day, everything())
+
+snp_data
+```
+
+```{r}
+unemp_data = read_csv("./data/unemployment.csv") %>%
+  janitor::clean_names() %>%
+  pivot_longer(
+  jan:dec,
+  names_to = "month",
+  values_to = "unemployment"
+  )
+
+unemp_data
+```
+
+Problem 3
+```{r}
+
 ```
 
