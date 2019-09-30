@@ -23,19 +23,29 @@ as.integer(pull(wheel_data, sports_balls))
 ```
 
 ```{r 2018 precipitation, message=FALSE}
-precip_2018 =
-read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 3) %>%
+precip2018_data =
+read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 3, skip = 1) %>%
 janitor::clean_names() %>%
-drop_na(x2)
-
+drop_na(total, month) %>%
+mutate(
+  year = c("2018", "2018", "2018", "2018", "2018", "2018", "2018")
+)
+precip2018_data
 ```
 
 ```{r 2017 precipitation, message=FALSE}
-precip_2017 =
-read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 4) %>%
+precip2017_data =
+read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 4, skip = 1) %>%
 janitor::clean_names() %>% 
-drop_na(x2)
-
+drop_na(total, month) %>%
+mutate(
+  year = c("2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017")
+)
+precip2017_data
 ```
 
+```{r joined precipitation, message=FALSE}
+overall_precip_data = 
+  left_join(precip2018_data, precip2017_data, by = "month")
+```
 
