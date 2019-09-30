@@ -2,12 +2,40 @@
 title: "P8105_hw2_md3851"
 author: "Misbath Daouda"
 date: "9/27/2019"
-output: git_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(readxl)
+```
+
+This chunk loads and cleans the data in the first sheet of the Excel file.
+```{r Mr.Trash Wheel, message=FALSE} 
+wheel_data =
+read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 1) %>%
+janitor::clean_names() %>%
+select(-x15) %>%
+drop_na(dumpster) 
+
+as.integer(pull(wheel_data, sports_balls))
+```
+
+```{r 2018 precipitation, message=FALSE}
+precip_2018 =
+read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 3) %>%
+janitor::clean_names() %>%
+drop_na(x2)
+
+```
+
+```{r 2017 precipitation, message=FALSE}
+precip_2017 =
+read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 4) %>%
+janitor::clean_names() %>% 
+drop_na(x2)
+
 ```
 
 
