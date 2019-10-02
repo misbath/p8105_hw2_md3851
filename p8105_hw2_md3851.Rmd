@@ -9,30 +9,34 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(readxl)
+library(dplyr)
 ```
 
 Problem 1
 
-This chunk loads and cleans the data in the first sheet of the Excel file.
+This problem is based on the Mr. TrashWheel dataset. 
 ```{r Mr.Trash Wheel, message=FALSE} 
 wheel_data =
-read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 1) %>%
+read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 1, skip = 1) %>%
 janitor::clean_names() %>%
-select(-x15) %>%
-drop_na(dumpster) 
+drop_na(dumpster) %>% 
+mutate(
+  sports_balls = round(sports_balls),
+  sports_balls = as.integer(sports_balls)) %>% 
+  select(-x15)
 
-as.integer(pull(wheel_data, sports_balls))
+wheel_data
 ```
 
 ```{r 2018 precipitation, message=FALSE}
 precip2018_data =
 read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 3, skip = 1) %>%
 janitor::clean_names() %>%
-drop_na(total) %>%
+drop_na(total, month) %>%
 mutate(
-  year = c("2018", "2018", "2018", "2018", "2018", "2018", "2018", "2018")
-) %>%
+  year = 2018) %>%
 select(month, year, total)
+
 precip2018_data
 ```
 
@@ -40,50 +44,72 @@ precip2018_data
 precip2017_data =
 read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 4, skip = 1) %>%
 janitor::clean_names() %>% 
-drop_na(total) %>%
+drop_na(total, month) %>%
 mutate(
-  year = c("2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017", "2017")
-) %>%
+  year = 2017) %>%
 select(month, year, total)
+
 precip2017_data
 ```
 
 ```{r joined precipitation, message=FALSE}
 overall_precip_data = 
-  left_join(precip2018_data, precip2017_data, by = "month") 
+  left_join(precip2018_data, precip2017_data, by = "month") %>%
+  mutate(month = month.name[month])
+    
+overall_precip_data2 = 
+  full_join(precip2018_data, precip2017_data, by = c("month", "total", "year")) %>%
+  mutate(month = month.name[month])
 
-#  mutate(month = month.name)
-  
 overall_precip_data
+overall_precip_data2
 ```
 
+The `wheel_data` dataframe contains monthly information on overall amounts of trash collected at specific dumpsters in Inner Harbor in Baltimore. It also includes quantities of individual items found in the trash, such as `plastic_bottles`, `grocery_bags`, and `cigarette_buds`. It contains `r count(pull(wheel_data, dumpster))`. In 2017, the median number of sports balls found in a dumpster was `r median(pull(filter(wheel_data, year == 2017), sports_balls))`. 
+
+The `overall_precip_data` dataframe contains monthly information on quantities (in inches) of precipitation in Inner Harbor in Baltimore. Based on the available data, the total precipitation in 2018 was `r sum(pull(overall_precip_data, total.x))`. The number of observations is nrow(overall_precip_data).
+
 Problem 2
-```{r}
+```{r pols, message=FALSE}
 pols_data = read_csv("./data/pols-month.csv") %>%
   janitor::clean_names() %>%
   separate(mon, into = c("year", "month", "day"), sep="-") %>%
   mutate(
-   president = prez_gop + prez_dem
-   ) %>%
-  select(-day, -prez_gop, -prez_dem) 
-
-#months(pull(month))
-#month.name(month)
-  
+  year = as.integer(year),
+  month = as.integer(month),
+  day = as.integer(day),
+  month = month.name[month]
+  )%>%
+  pivot_longer(
+    c(prez_gop, prez_dem),
+    names_to = "president",
+    names_prefix = "prez_",
+    values_to = "party") %>%
+    select(-party) %>%
+    distinct()
+ 
 
 pols_data
+
+pols_data = 
+  mutate(pols_data, president = recode(prez_dem, "0" = "gop", "1" = "dem"))
 ```
 
-```{r}
+```{r snp, message=FALSE}
 snp_data = read_csv("./data/snp.csv") %>%
   janitor::clean_names() %>%
   separate(date, into = c("day", "month", "year"), sep="/") %>%
-  select(year, month, day, everything())
+  mutate(
+  year = as.integer(year),
+  month = as.integer(month),
+  day = as.integer(day),
+  month = month.name[month]) %>%
+  select(year, month, close)
 
 snp_data
 ```
 
-```{r}
+```{r unemp, message=FALSE}
 unemp_data = read_csv("./data/unemployment.csv") %>%
   janitor::clean_names() %>%
   pivot_longer(
@@ -95,8 +121,52 @@ unemp_data = read_csv("./data/unemployment.csv") %>%
 unemp_data
 ```
 
+```{r combined data, message=FALSE}
+partial_538_data = 
+  left_join(pols_data, snp_data, by = c("year", "month"))
+overall_538_data = 
+  left_join(partial_538_data, unemp_data, by = c("year", "month")) %>% 
+  select(-close, -unemployment)
+```
+
 Problem 3
 ```{r}
+names_data = read_csv("./data/Popular_Baby_Names.csv") %>%
+janitor::clean_names() %>%
+distinct() %>%
+mutate(
+    gender = str_to_lower(gender),
+    ethnicity = str_to_lower(ethnicity),
+    childs_first_name = str_to_lower(childs_first_name)) %>%
+mutate(
+    ethnicity = replace (ethnicity, ethnicity == "black non hisp", "black non hispanic"),
+    ethnicity = replace (ethnicity, ethnicity == "white non hisp", "white non hispanic"),
+    ethnicity = replace (ethnicity, ethnicity == "asian and paci", "asian and pacific islander"))
+
+names_data
+
+olivia_data = filter(names_data, childs_first_name == "olivia") %>%
+    select(-gender, -childs_first_name, -count) %>%
+    pivot_wider(
+    names_from = "year_of_birth", 
+    values_from = "rank"
+    )
+
+olivia_data
+
+boys_data = filter(names_data, gender == "male", rank == "1") %>%
+    select(-gender, -count, -rank) %>%
+    pivot_wider(
+    names_from = "year_of_birth", 
+    values_from = "childs_first_name"
+    )
+
+boys_data
+
+scatter_plot = filter(names_data, gender == "male", ethnicity == "white non hispanic", year_of_birth == "2016") %>%
+  ggplot(aes(x = rank, y = count)) + geom_point()
+
+scatter_plot 
 
 ```
 
