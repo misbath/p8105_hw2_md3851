@@ -17,7 +17,7 @@ Problem 1
 This problem is based on the Mr. TrashWheel dataset. 
 ```{r Mr.Trash Wheel, message=FALSE} 
 wheel_data =
-read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 1, skip = 1) %>%
+read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", sheet = 1, skip = 1) %>%
 janitor::clean_names() %>%
 drop_na(dumpster) %>% 
 mutate(
@@ -30,7 +30,7 @@ wheel_data
 
 ```{r 2018 precipitation, message=FALSE}
 precip2018_data =
-read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 3, skip = 1) %>%
+read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = "2018 Precipitation", skip = 1) %>%
 janitor::clean_names() %>%
 drop_na(total, month) %>%
 mutate(
@@ -42,7 +42,7 @@ precip2018_data
 
 ```{r 2017 precipitation, message=FALSE}
 precip2017_data =
-read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = 4, skip = 1) %>%
+read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = "2017 Precipitation", skip = 1) %>%
 janitor::clean_names() %>% 
 drop_na(total, month) %>%
 mutate(
@@ -54,20 +54,20 @@ precip2017_data
 
 ```{r joined precipitation, message=FALSE}
 overall_precip_data = 
-  left_join(precip2018_data, precip2017_data, by = "month") %>%
-  mutate(month = month.name[month])
-    
-overall_precip_data2 = 
   full_join(precip2018_data, precip2017_data, by = c("month", "total", "year")) %>%
+  mutate(month = month.name[month])
+
+overall_precip_data2 = 
+  left_join(precip2018_data, precip2017_data, by = "month") %>%
   mutate(month = month.name[month])
 
 overall_precip_data
 overall_precip_data2
 ```
 
-The `wheel_data` dataframe contains monthly information on overall amounts of trash collected at specific dumpsters in Inner Harbor in Baltimore. It also includes quantities of individual items found in the trash, such as `plastic_bottles`, `grocery_bags`, and `cigarette_buds`. It contains `r count(pull(wheel_data, dumpster))`. In 2017, the median number of sports balls found in a dumpster was `r median(pull(filter(wheel_data, year == 2017), sports_balls))`. 
+The wheel_data dataframe contains monthly information on overall amounts of trash collected at specific dumpsters in Inner Harbor in Baltimore. It also includes quantities of individual items found in the trash, such as plastic bottles, grocery bags, and cigarette buds. It contains `r nrow(wheel_data)`observations. In 2017, the median number of sports balls found in a dumpster was `r median(pull(filter(wheel_data, year == 2017), sports_balls))`. 
 
-The `overall_precip_data` dataframe contains monthly information on quantities (in inches) of precipitation in Inner Harbor in Baltimore. Based on the available data, the total precipitation in 2018 was `r sum(pull(overall_precip_data, total.x))`. The number of observations is nrow(overall_precip_data).
+The overall_precip_data dataframe contains monthly information on quantities (in inches) of precipitation in Inner Harbor in Baltimore. It contains `r nrow(wheel_data)`observations. Based on the available data, the total precipitation in 2018 was `r sum(pull(filter(overall_precip_data, year == 2018), total))`. 
 
 Problem 2
 ```{r pols, message=FALSE}
@@ -80,19 +80,10 @@ pols_data = read_csv("./data/pols-month.csv") %>%
   day = as.integer(day),
   month = month.name[month]
   )%>%
-  pivot_longer(
-    c(prez_gop, prez_dem),
-    names_to = "president",
-    names_prefix = "prez_",
-    values_to = "party") %>%
-    select(-party) %>%
-    distinct()
- 
+  mutate(president = recode(prez_dem, "0" = "gop", "1" = "dem"))
 
 pols_data
-
-pols_data = 
-  mutate(pols_data, president = recode(prez_dem, "0" = "gop", "1" = "dem"))
+  
 ```
 
 ```{r snp, message=FALSE}
@@ -127,6 +118,8 @@ partial_538_data =
 overall_538_data = 
   left_join(partial_538_data, unemp_data, by = c("year", "month")) %>% 
   select(-close, -unemployment)
+
+overall_538_data
 ```
 
 Problem 3
