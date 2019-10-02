@@ -67,7 +67,7 @@ overall_precip_data2
 
 The wheel_data dataframe contains monthly information on overall amounts of trash collected at specific dumpsters in Inner Harbor in Baltimore. It also includes quantities of individual items found in the trash, such as plastic bottles, grocery bags, and cigarette buds. It contains `r nrow(wheel_data)` observations. In 2017, the median number of sports balls found in a dumpster was `r median(pull(filter(wheel_data, year == 2017), sports_balls))`. 
 
-The overall_precip_data dataframe contains monthly information on quantities (in inches) of precipitation in Inner Harbor in Baltimore. It contains `r nrow(wheel_data)` observations. Based on the available data, the total precipitation in 2018 was `r sum(pull(filter(overall_precip_data, year == 2018), total))`. 
+The overall_precip_data dataframe contains monthly information on quantities (in inches) of precipitation in Inner Harbor in Baltimore. It contains `r nrow(wheel_data)` observations. Based on the available data, the total precipitation in 2018 was `r sum(pull(filter(overall_precip_data, year == 2018), total))` inches. 
 
 Problem 2
 ```{r pols, message=FALSE}
@@ -123,6 +123,14 @@ overall_538_data =
 
 overall_538_data
 ```
+
+The pols dataset contains information on the number of national politicians who are democratic or republican on a monthly basis. It contains `r nrow(pols_data)` observations. 
+The snp dataset contains `r nrow(snp_data)` observations of 2 variables related to Standard & Poor’s stock market index (S&P), which is often used as a representative measure of stock market as a whole.
+The unemp dataset contains montlhly and yearly unemployment percentages and includes`r nrow(pols_data)` observations. 
+
+These three datasets were pulled together to create the overall_538_data dataframe, which provides the information described above for the years `r range(pull(overall_538_data, year))`. 
+
+
 
 Problem 3
 ```{r}
